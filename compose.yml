@@ -1,0 +1,47 @@
+services:
+  qiskit-llm:
+    container_name: qiskit-llm
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    ports:
+      - '5000:8080'
+    volumes:
+      - '~/.cache/llama.cpp/:/models' 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]       
+    command: >
+      -m /models/Qiskit_granite-8b-qiskit-GGUF_granite-8b-qiskit.Q4_K_M.gguf
+      --port 8080
+      --host 0.0.0.0
+      -n 1024
+  
+  webUI:
+    container_name: librechat
+    image: ghcr.io/danny-avila/librechat:v0.8.3-rc1
+    restart: "always"
+    ports:
+      - '3080:3080'
+    environment:
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - ALLOW_REGISTRATION=false
+      - ALLOW_SOCIAL_LOGIN=false
+      - ALLOW_EMAIL_LOGIN=true
+      - ALLOW_SOCIAL_REGISTRATION=false
+    volumes:
+      - './librechat.yml:/app/librechat.yaml'
+
+  mongodb:
+    container_name: mongo
+    hostname: mongo
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+
