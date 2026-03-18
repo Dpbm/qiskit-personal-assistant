@@ -45,3 +45,20 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
 
+  zeroclaw:
+    container_name: zeroclaw
+    hostname: zeroclaw
+    build:
+      context: .
+      dockerfile: zeroclaw.Dockerfile
+    environment:
+      - HOME=/
+    ports:
+      - "42617:42617"
+    volumes:
+      - 'data:/.zeroclaw'
+      - './zeroclaw.conf:/.zeroclaw/config.toml'
+
+volumes:
+  data:
+    external: false
