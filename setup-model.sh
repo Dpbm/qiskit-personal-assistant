@@ -2,27 +2,37 @@
 
 set -eo pipefail
 
-MODEL="Qwen3.5-4B-Q8_0.gguf"
-MODEL_URL="https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q8_0.gguf"
+MODEL="granite-8b-qiskit.Q4_K_M.gguf"
+MODEL_URL="https://huggingface.co/Qiskit/granite-8b-qiskit-GGUF/resolve/main/granite-8b-qiskit.Q4_K_M.gguf"
 MODELS_PATH="./models"
 LIBRECHAT_FILE="librechat.yml"
 ZEROCLAW_FILE="zeroclaw.conf"
 COMPOSE_FILE="compose.yml"
+TEMPERATURE=0.4
 
 DISCORD_TOKEN="$1"
 DISCORD_USER="$2"
+DISCORD_CHANNEL="$3"
+OPENROUTER_API_KEY="$4"
+
+if [ ! -n "$DISCORD_TOKEN" ] || [ ! -n "$DISCORD_USER" ] || [ ! -n "$DISCORD_CHANNEL" ] || [ ! -n "$OPENROUTER_API_KEY" ]; then
+  echo "you must provide discord key, user ID, channel ID and Openrouter key!"
+  exit 1
+fi
+
 if [ ! -d $MODELS_PATH ]; then
   echo "Creating path: $MODELS_PATH..."
   mkdir -p "$MODELS_PATH"
 fi
 
-echo "Downloading model..."
-curl -L --output-dir "$MODELS_PATH" -O "$MODEL_URL"
+if [ ! -f "${MODELS_PATH}/${MODEL}" ]; then
+  echo "Downloading model..."
+  curl -L --output-dir "$MODELS_PATH" -O "$MODEL_URL"
+fi
 
 echo "Generating config for librechat..."
 cat <<EOF >"$LIBRECHAT_FILE"
 version: 1.3.4
-
 cache: true
 
 interface: 
@@ -82,17 +92,22 @@ endpoints:
       titleConvo: true
       titleModel: "Qiskit Model"
       summarize: false
-      summaryModel: "Model to asist you during quantum programming"
+      summaryModel: "Model to assist you during quantum programming"
       forcePrompt: false
       modelDisplayLabel: "Qiskit"
 EOF
 
 echo "Generating config for zeroclaw..."
 cat <<EOF >"$ZEROCLAW_FILE"
-default_provider = "llamacpp"
+default_provider = "openrouter"
+default_model = "nvidia/nemotron-3-super-120b-a12b:free"
+api_key = "$OPENROUTER_API_KEY"
+
+[provider.llamacpp]
+name = "llamacpp"
 api_url = "http://qiskit-llm:8080/v1"
+temperature = $TEMPERATURE
 default_model = "$MODEL"
-default_temperature = 0.6
 
 [security.audit]
 enabled = false
@@ -126,7 +141,7 @@ allowed_commands = [
     "date",
     "zeroclaw"
 ]
-auto_approve = ["send_discord"]
+auto_approve = ["send_discord", "shell"]
 
 [agent]
 
@@ -134,6 +149,11 @@ auto_approve = ["send_discord"]
 mode = "dynamic"
 tools = ["send_discord"]
 keywords = ["send", "tell", "ask", "say"]
+
+[cron]
+enabled = true
+
+
 EOF
 
 echo "configuring compose file.."
@@ -191,13 +211,15 @@ services:
     build:
       context: .
       dockerfile: zeroclaw.Dockerfile
+      args:
+        RECIPIENT: $DISCORD_CHANNEL
     ports:
       - "42617:42617"
     volumes:
       - 'data:/.zeroclaw'
       - './zeroclaw.conf:/.zeroclaw/config.toml:ro'
       - './skills:/.zeroclaw/workspace/skills:ro'
-      - './tools.md:/.zeroclaw/workspace/tools.md:ro'
+      - './tools.md:/.zeroclaw/workspace/tools.md'
 
 volumes:
   data:

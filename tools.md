@@ -5,4 +5,7 @@
 - **Parameters**: 
     - `recipient`: The Discord server channel ID.
     - `message`: The actual text content to send.
-- **Command**: zeroclaw channel send --channel-id discord --recipient {recipient} "{message}"
+- **Command**: zeroclaw channel send --channel-id discord --recipient {recipient} "$(cat <<'EOF'
+{message}
+EOF
+)"

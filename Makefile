@@ -13,6 +13,8 @@ PASSWORD := default12345678
 
 SHELL := /usr/bin/bash
 
+.PHONY: up dow debug
+
 all: up
 
 up: down
@@ -30,3 +32,5 @@ down:
 	@echo "Shutting down..."
 	docker compose down --remove-orphans
 
+debug:
+	docker exec -it zeroclaw /bin/sh

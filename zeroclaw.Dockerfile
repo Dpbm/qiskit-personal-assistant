@@ -1,6 +1,6 @@
 # ---- FETCH FROM GIT -------
 FROM alpine:3.23.3 AS downloader
-RUN apk add --no-cache git
+RUN apk add --no-cache git tzdata
 WORKDIR /repo
 RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git
 
@@ -46,6 +46,15 @@ FROM scratch
 WORKDIR /
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/zeroclaw /bin/zeroclaw
 COPY --from=tools /bin/busybox /bin/busybox
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+ARG TIMEZONE=America/Sao_Paulo
+ENV TZ=$TIMEZONE
+
+ARG RECIPIENT
+ENV RECIPIENT=$RECIPIENT
+
+COPY --from=builder /etc/localtime /etc/localtime
 
 ENV LANG=C.UTF-8
 ENV HOME=/
@@ -57,6 +66,8 @@ HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
     CMD ["/bin/zeroclaw", "status", "--format=exit-code"]
 
 EXPOSE 42617
+
+RUN /bin/zeroclaw cron add '0 9 * * *' "get a random quantum algorithm and send it to $RECIPIENT" --tz $TIMEZONE --agent
 
 ENTRYPOINT ["/bin/zeroclaw"]
 CMD ["daemon", "--config-dir", "/.zeroclaw/"]
