@@ -25,7 +25,6 @@ chmod +x setup-model.sh
 ./setup-model.sh "<your bot key>" "<your discord user ID>" "<you discord channel ID>" "<your openrouter api key>"
 make USERNAME=<userame> NAME=<name> EMAIL=<email> PASSWORD=<pass> MONGO_USER=<user> MONGO_PASSWORD=<pass> JWT_SECRET=<secret> JWT_REFRESH_SECRET=<secret>
 ```
-```
 
 After that, you can access these endpoints:
 
@@ -42,6 +41,3 @@ make debug
 ```
 
 to access the shell inside the container to check status and run commands.
-```
-```
-```
