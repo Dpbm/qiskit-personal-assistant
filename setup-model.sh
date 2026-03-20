@@ -165,7 +165,7 @@ services:
     ports:
       - '5000:8080'
     volumes:
-      - './models:/models' 
+      - './models:/models:ro' 
     deploy:
       resources:
         reservations:
@@ -194,7 +194,7 @@ services:
       - ALLOW_EMAIL_LOGIN=true
       - ALLOW_SOCIAL_REGISTRATION=false
     volumes:
-      - './librechat.yml:/app/librechat.yaml'
+      - './librechat.yml:/app/librechat.yaml:ro'
 
   mongodb:
     container_name: mongo
@@ -219,7 +219,7 @@ services:
       - 'data:/.zeroclaw'
       - './zeroclaw.conf:/.zeroclaw/config.toml:ro'
       - './skills:/.zeroclaw/workspace/skills:ro'
-      - './tools.md:/.zeroclaw/workspace/tools.md'
+      - './tools.md:/.zeroclaw/workspace/tools.md:ro'
 
 volumes:
   data:

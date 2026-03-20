@@ -1,6 +1,6 @@
 # ---- FETCH FROM GIT -------
 FROM alpine:3.23.3 AS downloader
-RUN apk add --no-cache git tzdata
+RUN apk add --no-cache git tzdata curl
 WORKDIR /repo
 RUN git clone https://github.com/zeroclaw-labs/zeroclaw.git
 
@@ -47,6 +47,8 @@ WORKDIR /
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/zeroclaw /bin/zeroclaw
 COPY --from=tools /bin/busybox /bin/busybox
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+# COPY --from=downloader /bin/git /bin/git
+# COPY --from=downloader /bin/curl /bin/curl
 
 ARG TIMEZONE=America/Sao_Paulo
 ENV TZ=$TIMEZONE
@@ -61,6 +63,7 @@ ENV HOME=/
 ENV ZEROCLAW_GATEWAY_PORT=42617
 
 RUN ["/bin/busybox", "--install", "-s", "/bin"]
+ENV SHELL=/bin/sh
 
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 --start-period=10s \
     CMD ["/bin/zeroclaw", "status", "--format=exit-code"]
